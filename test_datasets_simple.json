@@ -1,0 +1,12 @@
+{
+    "datasets": [
+      {
+        "name": "South Building",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/south-building.zip"
+      },
+      {
+        "name": "Gerrard Hall",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/gerrard-hall.zip"
+      }
+    ]
+} 

@@ -1,0 +1,23 @@
+[package]
+name = "dataset_downloader"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+anyhow = "1.0"
+bytes = "1.6"
+# Tokio runtime with full feature‑set for async FS, I/O, time, and macros
+ tokio = { version = "1.38", features = ["fs", "macros", "rt-multi-thread", "time", "io-util"] }
+# Robust HTTP client with native gzip/deflate + streaming + pure‑Rust TLS
+reqwest = { version = "0.12", features = ["json", "gzip", "stream", "rustls-tls"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# Concurrent utilities and combinators
+futures = "0.3"
+# Retries with exponential back‑off
+ tokio-retry = "0.3.0"
+# Terminal progress bars with async support
+indicatif = { version = "0.17", features = ["tokio"] }
+# ZIP archive reader/writer (no default flate2 dependency for smaller build)
+zip = { version = "4.0.0", default-features = false, features = ["deflate"] }

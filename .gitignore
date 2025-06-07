@@ -1,2 +1,4 @@
-/target
+target
 status.md
+tests/data/*
+test_output

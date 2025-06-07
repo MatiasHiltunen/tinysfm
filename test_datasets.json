@@ -1,0 +1,45 @@
+{
+    "datasets": [
+      {
+        "name": "South Building",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/south-building.zip"
+      },
+      {
+        "name": "Gerrard Hall",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/gerrard-hall.zip"
+      },
+      {
+        "name": "Person Hall Part 1",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/person-hall.zip"
+      },
+      {
+        "name": "Person Hall Part 2",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/person-hall.z01"
+      },
+      {
+        "name": "Graham Hall Part 1",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/graham-hall.zip"
+      },
+      {
+        "name": "Graham Hall Part 2",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/graham-hall.z01"
+      },
+      {
+        "name": "Graham Hall Part 3",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/graham-hall.z02"
+      },
+      {
+        "name": "Graham Hall Part 4",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/graham-hall.z03"
+      },
+      {
+        "name": "Graham Hall Part 5",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/graham-hall.z04"
+      },
+      {
+        "name": "Graham Hall Part 6",
+        "url": "https://github.com/colmap/colmap/releases/download/3.11.1/graham-hall.z05"
+      }
+    ]
+  }
+  
