@@ -18,6 +18,10 @@ struct Args {
     /// Output folder for COLMAP files
     #[arg(short, long, default_value = "colmap_output")]
     output: PathBuf,
+    
+    /// Output format (colmap or nerfstudio)
+    #[arg(long, default_value = "colmap")]
+    format: String,
 
     /// Maximum image dimension (images larger than this will be resized)
     #[arg(long, default_value = "4096")]
@@ -191,20 +195,46 @@ fn process_images(args: &Args, images: &[ImageData]) -> Result<()> {
     // In a real implementation, this would call our GPU pipeline
     cubecl_test::production_demo::run_production_demo();
     
-    // Copy COLMAP output to the specified directory if different
-    if args.output != PathBuf::from("colmap_output") {
-        println!("\n📁 Moving output files to: {}", args.output.display());
-        
-        // Move the files
-        for file in ["cameras.txt", "images.txt", "points3D.txt"] {
-            let src = PathBuf::from("colmap_output").join(file);
-            let dst = args.output.join(file);
-            
-            if src.exists() {
-                std::fs::copy(&src, &dst)
-                    .with_context(|| format!("Failed to copy {}", file))?;
-                println!("   ✓ {}", file);
+    // Handle different output formats
+    match args.format.to_lowercase().as_str() {
+        "colmap" => {
+            // Copy COLMAP output to the specified directory if different
+            if args.output != PathBuf::from("colmap_output") {
+                println!("\n📁 Moving COLMAP output files to: {}", args.output.display());
+                
+                // Move the files
+                for file in ["cameras.txt", "images.txt", "points3D.txt"] {
+                    let src = PathBuf::from("colmap_output").join(file);
+                    let dst = args.output.join(file);
+                    
+                    if src.exists() {
+                        std::fs::copy(&src, &dst)
+                            .with_context(|| format!("Failed to copy {}", file))?;
+                        println!("   ✓ {}", file);
+                    }
+                }
             }
+        }
+        "nerfstudio" => {
+            println!("\n🔄 Converting to NeRFStudio format...");
+            
+            // First ensure COLMAP output exists
+            let colmap_dir = PathBuf::from("colmap_output");
+            if !colmap_dir.join("cameras.txt").exists() {
+                anyhow::bail!("COLMAP output not found. Pipeline may have failed.");
+            }
+            
+            // Convert COLMAP to NeRFStudio format
+            cubecl_test::convert_colmap_to_nerf(
+                &colmap_dir,
+                &args.input,
+                &args.output,
+            )?;
+            
+            println!("✅ NeRFStudio output ready in: {}", args.output.display());
+        }
+        _ => {
+            anyhow::bail!("Unsupported output format: {}. Use 'colmap' or 'nerfstudio'", args.format);
         }
     }
     
