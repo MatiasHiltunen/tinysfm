@@ -1,9 +1,9 @@
-``` mermaidjs
+``` mermaid
 graph TD
-    A["📁 Image Folder Input"] --> B["🔍 Auto-Detection<br/>(Resolution, Format)"]
-    B --> C["📊 Dynamic Memory<br/>Allocation"]
-    C --> D["⚡ GPU Pipeline"]
-    D --> E["📦 COLMAP Output"]
+    A["Image Folder Input"] --> B["🔍 Auto-Detection<br/>(Resolution, Format)"]
+    B --> C["Dynamic Memory<br/>Allocation"]
+    C --> D["GPU Pipeline"]
+    D --> E["COLMAP Output"]
     
     F["CLI Arguments"] --> G["--input folder<br/>--output folder<br/>--gpu-device<br/>--quality"]
     G --> B
