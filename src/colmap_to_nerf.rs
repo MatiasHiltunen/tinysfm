@@ -134,14 +134,51 @@ pub struct ColmapToNerfConverter {
     colmap_dir: PathBuf,
     image_dir: PathBuf,
     output_dir: PathBuf,
+    actual_image_names: Option<Vec<String>>,
 }
 
 impl ColmapToNerfConverter {
     pub fn new(colmap_dir: PathBuf, image_dir: PathBuf, output_dir: PathBuf) -> Self {
+        // Discover actual images in the input directory
+        let actual_image_names = Self::discover_images(&image_dir);
+        
         Self {
             colmap_dir,
             image_dir,
             output_dir,
+            actual_image_names,
+        }
+    }
+    
+    /// Discover actual image files in the input directory
+    fn discover_images(image_dir: &Path) -> Option<Vec<String>> {
+        if let Ok(entries) = fs::read_dir(image_dir) {
+            let mut images: Vec<String> = entries
+                .filter_map(|entry| {
+                    let entry = entry.ok()?;
+                    let path = entry.path();
+                    if path.is_file() {
+                        let name = path.file_name()?.to_str()?.to_string();
+                        let ext = path.extension()?.to_str()?.to_lowercase();
+                        if matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "bmp" | "tiff" | "webp") {
+                            Some(name)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            
+            images.sort(); // Ensure consistent ordering
+            if images.is_empty() {
+                None
+            } else {
+                Some(images)
+            }
+        } else {
+            None
         }
     }
     
@@ -187,6 +224,9 @@ impl ColmapToNerfConverter {
             .set_camera_model(CameraModel::Opencv)
             .set_intrinsics(fl_x, fl_y, cx, cy, camera.width, camera.height);
         
+        // Map COLMAP image names to actual image files
+        let image_mapping = self.create_image_mapping(&images);
+        
         // Convert each image
         for (idx, image) in images.iter().enumerate() {
             // Convert quaternion to rotation matrix
@@ -208,8 +248,13 @@ impl ColmapToNerfConverter {
                 }
             }
             
+            // Use actual image name if available, otherwise use COLMAP name
+            let actual_name = image_mapping.get(&image.name)
+                .cloned()
+                .unwrap_or_else(|| image.name.clone());
+            
             // Create relative path for image
-            let image_path = format!("images/{}", image.name);
+            let image_path = format!("images/{}", actual_name);
             
             builder = builder.add_frame(Frame {
                 file_path: image_path,
@@ -245,6 +290,49 @@ impl ColmapToNerfConverter {
         self.setup_images(&images, &output_images_dir)?;
         
         Ok(())
+    }
+    
+    /// Create mapping from COLMAP image names to actual image files
+    fn create_image_mapping(&self, colmap_images: &[ColmapImage]) -> HashMap<String, String> {
+        let mut mapping = HashMap::new();
+        
+        // If we don't have actual images, just return empty mapping
+        let actual_images = match &self.actual_image_names {
+            Some(images) => images,
+            None => return mapping,
+        };
+        
+        // Try to match COLMAP names to actual files
+        for colmap_image in colmap_images {
+            let colmap_name = &colmap_image.name;
+            
+            // First try exact match
+            if actual_images.contains(colmap_name) {
+                mapping.insert(colmap_name.clone(), colmap_name.clone());
+                continue;
+            }
+            
+            // Try without extension
+            let stem = Path::new(colmap_name)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or(colmap_name);
+            
+            // Find matching actual image
+            for actual_name in actual_images {
+                let actual_stem = Path::new(actual_name)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or(actual_name);
+                
+                if stem == actual_stem {
+                    mapping.insert(colmap_name.clone(), actual_name.clone());
+                    break;
+                }
+            }
+        }
+        
+        mapping
     }
     
     /// Copy or symlink images to output directory
