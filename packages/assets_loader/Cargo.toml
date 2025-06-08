@@ -1,0 +1,24 @@
+[package]
+name = "assets_loader"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+base64 = "0.21"
+brotli = "3"
+clap = { version = "4.5", features = ["derive"] }
+flate2 = "1.0"
+futures = "0.3"
+governor = "0.6"
+indicatif = { version = "0.17", features = ["tokio"] }
+log = "0.4"
+reqwest = { version = "0.12", features = ["gzip", "rustls-tls", "stream"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.38", features = ["macros", "rt-multi-thread", "fs", "time", "sync", "signal"] }
+md5 = "0.7"
+url = "2"
+zstd = "0.12"
+pretty_env_logger = "0.5"
+rand = "0.8"
