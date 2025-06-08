@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use nalgebra::{Matrix3, Matrix4, Quaternion, UnitQuaternion, Vector3};
 
 /// Camera model types supported by NeRFStudio
@@ -126,8 +125,8 @@ impl CoordinateConverter {
         focal_length: f64,
         principal_point_x: f64,
         principal_point_y: f64,
-        width: u32,
-        height: u32,
+        _width: u32,
+        _height: u32,
     ) -> (f64, f64, f64, f64) {
         // COLMAP uses normalized coordinates, NeRF uses pixel coordinates
         let fl_x = focal_length;

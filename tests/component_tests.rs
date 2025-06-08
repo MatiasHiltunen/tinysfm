@@ -173,4 +173,30 @@ mod tests {
         println!("  ✓ NeRFStudio transforms built successfully");
         println!("✅ NeRFStudio builder test passed!");
     }
+
+    #[test]
+    fn test_mast3r_pipeline_basic() {
+        use cubecl_test::{ImageLoader, Mast3rPipeline, Mast3rConfig};
+        use cubecl::wgpu::{WgpuRuntime, WgpuDevice};
+        use cubecl::Runtime;
+
+        let loader = ImageLoader::new().with_max_dimension(256);
+        let mut paths: Vec<_> = std::fs::read_dir("test_images")
+            .expect("test_images dir")
+            .take(2)
+            .map(|e| e.unwrap().path())
+            .collect();
+        paths.sort();
+        let images: Vec<_> = paths.iter().map(|p| loader.load(p).unwrap()).collect();
+
+        let device = WgpuDevice::default();
+        let client = WgpuRuntime::client(&device);
+        let mut pipeline = Mast3rPipeline::<WgpuRuntime>::new(client, Mast3rConfig::default());
+        pipeline.run(&images).unwrap();
+
+        assert!(pipeline.intrinsics().is_some());
+
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        pipeline.export_nerf_transforms(&images, tmp.path()).unwrap();
+    }
 } 

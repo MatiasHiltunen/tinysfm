@@ -37,9 +37,22 @@ rayon = "1.10"
 # Serialization
 serde_json = "1.0"
 serde_yaml = "0.9"
+# Computer vision
+opencv = { version = "0.94", default-features = false, features = [
+    "imgcodecs",
+    "imgproc",
+    "features2d",
+    "calib3d",
+] }
 
 # Linear algebra (for CPU operations)
 ndarray = "0.16"
 
+# CubeCL runtime for managing GPU clients
+cubecl-runtime = "0.5"
+
 # File formats
 ply-rs = "0.1"
+
+[dev-dependencies]
+tempfile = "3"

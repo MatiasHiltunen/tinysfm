@@ -3,7 +3,9 @@ use std::path::PathBuf;
 use std::time::Instant;
 use anyhow::{Result, Context};
 use indicatif::{ProgressBar, ProgressStyle};
-use cubecl_test::{ImageLoader, ImageData};
+use cubecl_test::{ImageLoader, ImageData, Mast3rPipeline, Mast3rConfig};
+use cubecl::wgpu::{WgpuDevice, WgpuRuntime};
+use cubecl::Runtime;
 
 #[derive(Parser, Debug)]
 #[command(name = "cubecl-sfm")]
@@ -15,12 +17,12 @@ struct Args {
     #[arg(short, long)]
     input: PathBuf,
 
-    /// Output folder for COLMAP files
-    #[arg(short, long, default_value = "colmap_output")]
+    /// Output folder
+    #[arg(short, long, default_value = "nerf_output")]
     output: PathBuf,
     
-    /// Output format (colmap or nerfstudio)
-    #[arg(long, default_value = "colmap")]
+    /// Output format (nerfstudio)
+    #[arg(long, default_value = "nerfstudio")]
     format: String,
 
     /// Maximum image dimension (images larger than this will be resized)
@@ -191,52 +193,28 @@ fn process_images(args: &Args, images: &[ImageData]) -> Result<()> {
     std::fs::create_dir_all(&args.output)
         .with_context(|| format!("Failed to create output directory: {}", args.output.display()))?;
     
-    // For now, run the production demo
-    // In a real implementation, this would call our GPU pipeline
-    cubecl_test::production_demo::run_production_demo();
-    
-    // Handle different output formats
-    match args.format.to_lowercase().as_str() {
-        "colmap" => {
-            // Copy COLMAP output to the specified directory if different
-            if args.output != PathBuf::from("colmap_output") {
-                println!("\n📁 Moving COLMAP output files to: {}", args.output.display());
-                
-                // Move the files
-                for file in ["cameras.txt", "images.txt", "points3D.txt"] {
-                    let src = PathBuf::from("colmap_output").join(file);
-                    let dst = args.output.join(file);
-                    
-                    if src.exists() {
-                        std::fs::copy(&src, &dst)
-                            .with_context(|| format!("Failed to copy {}", file))?;
-                        println!("   ✓ {}", file);
-                    }
-                }
-            }
-        }
-        "nerfstudio" => {
-            println!("\n🔄 Converting to NeRFStudio format...");
-            
-            // First ensure COLMAP output exists
-            let colmap_dir = PathBuf::from("colmap_output");
-            if !colmap_dir.join("cameras.txt").exists() {
-                anyhow::bail!("COLMAP output not found. Pipeline may have failed.");
-            }
-            
-            // Convert COLMAP to NeRFStudio format
-            cubecl_test::convert_colmap_to_nerf(
-                &colmap_dir,
-                &args.input,
-                &args.output,
-            )?;
-            
-            println!("✅ NeRFStudio output ready in: {}", args.output.display());
-        }
-        _ => {
-            anyhow::bail!("Unsupported output format: {}. Use 'colmap' or 'nerfstudio'", args.format);
-        }
+    // Initialize GPU runtime
+    let device = WgpuDevice::default();
+    let client = WgpuRuntime::client(&device);
+
+    let config = Mast3rConfig {
+        max_features: args.max_features,
+        ..Default::default()
+    };
+
+    let mut pipeline = Mast3rPipeline::<WgpuRuntime>::new(client, config);
+    pipeline.run(images)?;
+
+    if args.format.to_lowercase() == "nerfstudio" {
+        let path = args.output.join("transforms.json");
+        pipeline.export_nerf_transforms(images, &path)?;
+        println!("✅ NeRFStudio output written to {}", path.display());
+        return Ok(());
     }
     
+    if args.format.to_lowercase() != "nerfstudio" {
+        println!("⚠️  Only 'nerfstudio' format is supported in this demo");
+    }
+
     Ok(())
-} 
+}
